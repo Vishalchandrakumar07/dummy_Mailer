@@ -7,21 +7,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     // Trigger Make.com webhook
-    await fetch("https://hook.eu2.make.com/gnub4m0flainfntagvfym05hdz5939tm", {
+    const webhookResponse = await fetch("https://hook.eu2.make.com/gnub4m0flainfntagvfym05hdz5939tm", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email }),
     });
 
-    // 1x1 transparent GIF
+    if (!webhookResponse.ok) {
+      const text = await webhookResponse.text();
+      console.error("Make webhook failed:", webhookResponse.status, text);
+      return res.status(500).end();
+    }
+
+    // 1x1 transparent GIF (tracking pixel)
     const pixel = Buffer.from(
       "R0lGODlhAQABAPAAAP///wAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==",
       "base64"
     );
     res.setHeader("Content-Type", "image/gif");
-    res.status(200).send(pixel); // use send(), not return object
+    res.setHeader("Content-Length", pixel.length.toString());
+    return res.status(200).send(pixel);
   } catch (err) {
-    console.error(err);
-    res.status(500).end();
+    console.error("Error in /api/track-open:", err);
+    return res.status(500).end();
   }
 }

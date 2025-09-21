@@ -14,10 +14,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    // 1️⃣ Insert into Supabase
-    const { error } = await supabase.from("profiles").insert([
-      { full_name: name, email: email, email_sent: false },
-    ]);
+    // 1️⃣ Upsert into Supabase (insert or update)
+    const { error } = await supabase
+      .from("profiles")
+      .upsert(
+        { full_name: name, email: email, email_sent: true }, // data
+        { onConflict: "email" } // unique column to check
+      );
     if (error) throw error;
 
     // 2️⃣ Send Welcome Email
@@ -32,26 +35,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
     await transporter.sendMail({
-      from: `"My App" <${process.env.SMTP_USER}>`,
+      from: `"AffTitans" <${process.env.SMTP_USER}>`,
       to: email,
-      subject: "🎉 Welcome to Afftitans",
+      subject: "🎉 Welcome to AffTitans",
       html: `
         <!DOCTYPE html>
         <html>
         <head><meta charset="UTF-8"><title>Welcome</title></head>
         <body>
           <h2>Hello ${name}, welcome!</h2>
-          <p>Thank you for joining Afftitans.</p>
+          <p>Thank you for joining AffTitans.</p>
           <img src="https://dummy-mailer.vercel.app/api/track-open?email=${email}" width="1" height="1" style="display:none;" />
         </body>
         </html>
       `,
     });
 
-    // 3️⃣ Update email_sent to true
-    await supabase.from("profiles").update({ email_sent: true }).eq("email", email);
-
-    // ✅ Return JSON
     return res.status(200).json({ message: "Welcome email sent successfully!" });
   } catch (err) {
     console.error("Caught error in send-welcome:", err);

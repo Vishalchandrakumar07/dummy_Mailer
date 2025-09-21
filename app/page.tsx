@@ -7,18 +7,25 @@ export default function Home() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const res = await fetch("/api/send-welcome", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email }),
-    });
-    const data = await res.json();
-    alert(data.message);
+
+    try {
+      const res = await fetch("/api/send-welcome", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email }),
+      });
+
+      const data = await res.json();
+      alert(data.message);
+    } catch (err) {
+      console.error(err);
+      alert("Something went wrong");
+    }
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-blsck-100">
-      <form onSubmit={handleSubmit} className="bg-black p-6 rounded-xl shadow-md space-y-4">
+    <main className="flex min-h-screen items-center justify-center bg-black">
+      <form onSubmit={handleSubmit} className="bg-white p-6 rounded-xl shadow-md space-y-4">
         <input
           type="text"
           placeholder="Name"

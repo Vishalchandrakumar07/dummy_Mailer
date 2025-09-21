@@ -170,7 +170,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           <!-- 1x1 Tracking Pixel -->
 <tr>
   <td>
-    <img src="http://localhost:3000/api/track-open?email=${email}" width="1" height="1" style="display:none;" />
+    <img src="http://dummy-mailer.vercel.app/api/track-open?email=${email}" width="1" height="1" style="display:none;" />
   </td>
 </tr>
 

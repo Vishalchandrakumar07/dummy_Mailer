@@ -25,7 +25,7 @@ export default function Home() {
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-black">
-      <form onSubmit={handleSubmit} className="bg-white p-6 rounded-xl shadow-md space-y-4">
+      <form onSubmit={handleSubmit} className="bg-black p-6 rounded-xl shadow-md space-y-4">
         <input
           type="text"
           placeholder="Name"

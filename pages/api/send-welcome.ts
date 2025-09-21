@@ -45,7 +45,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         <body>
           <h2>Hello ${name}, welcome!</h2>
           <p>Thank you for joining Afftitans.</p>
-          <img src="${process.env.NEXT_PUBLIC_BASE_URL}/api/track-open?email=${email}" width="1" height="1" style="display:none;" />
+          <img src="https://dummy-mailer.vercel.app/api/track-open?email=${email}" width="1" height="1" style="display:none;" />
         </body>
         </html>
       `,

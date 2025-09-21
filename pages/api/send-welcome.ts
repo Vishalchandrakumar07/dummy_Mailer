@@ -3,18 +3,19 @@ import nodemailer from "nodemailer";
 import { supabase } from "@/lib/supabaseClient";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== "POST") return res.status(405).end(); // No message
+  if (req.method !== "POST") return res.status(405).end();
 
   const { name, email } = req.body;
+  if (!email || !name) return res.status(400).end();
 
   try {
-    // 1️⃣ Insert into Supabase
+    // 1️⃣ Insert user in Supabase
     const { error } = await supabase.from("profiles").insert([
-      { full_name: name, email: email, email_sent: false },
+      { full_name: name, email, email_sent: false },
     ]);
     if (error) throw error;
 
-    // 2️⃣ Send Welcome Email
+    // 2️⃣ Send email
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
       port: Number(process.env.SMTP_PORT),
@@ -25,11 +26,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       },
     });
 
+    // Use deployed URL or ngrok for testing
+    const trackingUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/api/track-open?email=${encodeURIComponent(email)}`;
+
     await transporter.sendMail({
-      from: `"My App" <${process.env.SMTP_USER}>`,
+      from: `"Afftitans" <${process.env.SMTP_USER}>`,
       to: email,
       subject: "🎉 Welcome to Afftitans",
-      html: `<!DOCTYPE html>
+      html: `
+        <!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
@@ -175,15 +180,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   </table>
 </body>
 </html>
-`,
+      `,
     });
 
-    // 3️⃣ Update email_sent to true
+    // 3️⃣ Update Supabase
     await supabase.from("profiles").update({ email_sent: true }).eq("email", email);
 
-    res.status(204).end(); // ✅ 204 No Content, nothing shown on frontend
+    res.status(204).end(); // no content
   } catch (err) {
-    console.error(err); // logged in server console only
-    res.status(500).end(); // frontend sees nothing
+    console.error(err);
+    res.status(500).end();
   }
 }

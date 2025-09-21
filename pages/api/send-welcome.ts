@@ -14,14 +14,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    // 1️⃣ Upsert into Supabase (insert or update)
-    const { error } = await supabase
+    // 1️⃣ Upsert into Supabase (prevents duplicates)
+    const { error: upsertError } = await supabase
       .from("profiles")
       .upsert(
-        { full_name: name, email: email, email_sent: true }, // data
-        { onConflict: "email" } // unique column to check
+        { full_name: name, email, email_sent: false },
+        { onConflict: "email" } // unique key
       );
-    if (error) throw error;
+    if (upsertError) throw upsertError;
 
     // 2️⃣ Send Welcome Email
     const transporter = nodemailer.createTransport({
@@ -35,25 +35,34 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
     await transporter.sendMail({
-      from: `"AffTitans" <${process.env.SMTP_USER}>`,
+      from: `"My App" <${process.env.SMTP_USER}>`,
       to: email,
-      subject: "🎉 Welcome to AffTitans",
+      subject: "🎉 Welcome to Afftitans",
       html: `
         <!DOCTYPE html>
         <html>
         <head><meta charset="UTF-8"><title>Welcome</title></head>
         <body>
           <h2>Hello ${name}, welcome!</h2>
-          <p>Thank you for joining AffTitans.</p>
-          <img src="https://dummy-mailer.vercel.app/api/track-open?email=${email}" width="1" height="1" style="display:none;" />
+          <p>Thank you for joining Afftitans.</p>
+          <img src="${process.env.NEXT_PUBLIC_BASE_URL}/api/track-open?email=${email}" width="1" height="1" style="display:none;" />
         </body>
         </html>
       `,
     });
 
+    // 3️⃣ Update email_sent to true
+    const { error: updateError } = await supabase
+      .from("profiles")
+      .update({ email_sent: true })
+      .eq("email", email);
+
+    if (updateError) console.warn("Failed to update email_sent:", updateError);
+
+    // ✅ Return success JSON
     return res.status(200).json({ message: "Welcome email sent successfully!" });
   } catch (err) {
     console.error("Caught error in send-welcome:", err);
-    return res.status(500).json({ message: "Failed to send email" });
+    return res.status(500).json({ message: "Failed to send email", error: err });
   }
 }

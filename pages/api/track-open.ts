@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const email = req.query.email as string;
-
+console.log ( "sucess", email)
   if (!email) return res.status(400).end();
 
   try {
